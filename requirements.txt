@@ -15,6 +15,7 @@
 pypdf>=4.0.0                  # PDF 文本层提取（BSD-3）；不装则 PDF 标为"需要可选依赖"
 opencc-python-reimplemented   # 繁简转换（Apache-2.0）；不装则「繁简视为同一本」开关禁用
 pyinstaller>=6.0              # 仅打包 exe 时需要；不装也能双击 .pyw 运行
+pillow                        # 仅 tools/make_screenshot.py 生成 README 截图时需要（BSD-like）
 
 # ---- 不需要的东西（说明为什么这里没有）----
 # send2trash    → 用 ctypes 直接调 SHFileOperationW（Windows）+ send2trash/gio（POSIX）兜底
