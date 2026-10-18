@@ -1,0 +1,39 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---- 运行期本地数据 ----
+# 默认缓存目录是 %LOCALAPPDATA%\NovelDedup，不在仓库里；这里排除可能出现的本地副本
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+books.sqlite*
+out/
+*重复清单.csv
+
+# ---- 本地语料（用户自己的书库，不提交）----
+book/
+testdata/
+
+# ---- 本地 AI 助手工作区数据 ----
+.workbuddy/
+
+# ---- 本地开发文档（开发过程记录，不随仓库分发）----
+docs/调研-*.md
+docs/核定-*.md
+docs/核定-*.txt
+docs/审计*.md
+docs/开发计划-*.md
+docs/PROJECT-STATUS.md
+
+# ---- 打包产物 ----
+dist/
+build/
+*.spec
+
+# ---- 临时 ----
+_tmp/
+*.tmp

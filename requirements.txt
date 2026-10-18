@@ -1,0 +1,27 @@
+# 小说查重（NovelDedup）—— 依赖说明
+# 安装可选组件：pip install -r requirements.txt
+# 或者直接双击仓库根目录的「安装可选组件.bat」
+#
+# ⚠ 最重要的一条：**核心链路零第三方依赖**。
+#    txt/html/epub/docx 解析、编码探测、归一化、指纹、判重、分组、删除到回收站、
+#    图形界面（tkinter），全部用 Python 标准库。
+#    实测纯标准库 84.9 万字/秒（含解码），不装任何东西也能跑 --scan 和双击界面。
+#
+# 本工具不联网、不上传任何文字、不做 OCR。
+
+# ---- 必需：无 ----
+
+# ---- 可选（缺失自动降级，不影响核心功能）----
+pypdf>=4.0.0                  # PDF 文本层提取（BSD-3）；不装则 PDF 标为"需要可选依赖"
+opencc-python-reimplemented   # 繁简转换（Apache-2.0）；不装则「繁简视为同一本」开关禁用
+pyinstaller>=6.0              # 仅打包 exe 时需要；不装也能双击 .pyw 运行
+
+# ---- 不需要的东西（说明为什么这里没有）----
+# send2trash    → 用 ctypes 直接调 SHFileOperationW（Windows）+ send2trash/gio（POSIX）兜底
+# PySide6/tkinter 第三方 → 界面用标准库 tkinter，零依赖
+# numpy         → 实测纯 Python 已达标，加了反而多一个编译依赖
+
+# ---- 明确禁用（许可证红线，见 README §八）----
+# EbookLib      AGPL-3.0  → 用标准库 zipfile + xml 自解 EPUB
+# mobi          GPL-3.0   → 不支持 MOBI/AZW3
+# PyMuPDF       AGPL-3.0  → 用 pypdf（BSD-3）

@@ -1,0 +1,4 @@
+# 仓库内统一 LF；Windows 批处理检出为 CRLF（否则 cmd 解析会出问题）
+* text=auto
+*.bat text eol=crlf
+*.pyw text eol=crlf
