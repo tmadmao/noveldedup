@@ -75,7 +75,13 @@ MOBI/AZW3、UMD/CHM、压缩包内的小说。
 
 ## 二、快速开始
 
-### 方式一：双击（推荐）
+### 方式一：直接用打包版（推荐给不想装 Python 的人）
+
+到 [**Releases**](https://github.com/tmadmao/noveldedup/releases/latest) 下载
+`NovelDedupTool-v1.0.5-win64.zip`（15 MB），解压后双击里面的 **`小说查重.exe`**。
+不用装 Python、不用装任何依赖；文件夹要整体使用（exe 依赖同目录的 `_internal`）。
+
+### 方式二：双击源码（已装 Python）
 
 双击 **`小说查重.pyw`** → 直接打开界面（不弹黑框）。
 
@@ -90,7 +96,7 @@ MOBI/AZW3、UMD/CHM、压缩包内的小说。
 
 双击 `运行工具.bat` 也可以，它会自动挑一个带图形库的 Python。
 
-### 方式二：命令行
+### 方式三：命令行
 
 ```bat
 :: 1) 先自检，确认环境正常（不依赖任何真实语料）

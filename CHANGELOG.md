@@ -60,6 +60,8 @@ L1 对不进 Pass2，本来没有证据段；点开时会重读并重解析整�
 - 新增 **§十一 致谢**：列出本项目真正用到的论文与开源项目，并逐条写明"借鉴了什么 / 为什么没采用"
   （winnowing、Broder 的 resemblance/containment、Jégou 的 burstiness、Charikar 的 SimHash 反例等）；
 - 仓库不再分发 `docs/` 下的开发过程记录（调研 / 核定 / 开发计划 / 状态 / 审计报告），与 `.gitignore` 的既有约定一致。
+- 发布 **GitHub Release v1.0.5**：`NovelDedupTool-v1.0.5-win64.zip`（免安装文件夹版，15 MB）
+  + `noveldedup-v1.0.5.zip`（源码包）；README「快速开始」增加打包版下载入口。
 
 ### 8. 其他
 
