@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import os
+import shutil
 import sys
 import tempfile
 import time
@@ -116,9 +118,14 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="docs/ui-main.png")
     ap.add_argument("--group", choices=("first", "omnibus"), default="first")
+    ap.add_argument("--dir", default="", help="演示书库放在哪（默认 %PUBLIC%\\小说示例）")
+    ap.add_argument("--keep", action="store_true", help="保留演示书库")
     args = ap.parse_args(argv[1:])
 
-    root = Path(tempfile.mkdtemp(prefix="nd_shot_"))
+    # 用 %PUBLIC% 下的固定目录：截图里的路径看起来像真实书库，不暴露用户名/临时目录
+    root = Path(args.dir) if args.dir else (
+        Path(os.environ.get("PUBLIC", tempfile.gettempdir())) / "小说示例")
+    root.mkdir(parents=True, exist_ok=True)
     build_demo_library(root)
     print(f"语料：{root}（6 本）")
 
@@ -171,11 +178,18 @@ def main(argv: list[str]) -> int:
     pairs = app.ptree.get_children()
     pick = pairs[0] if pairs else None
     for iid in pairs:
-        vals = app.ptree.item(iid, "values")
-        if any("⊂" in str(v) for v in vals):
+        vals = [str(v) for v in app.ptree.item(iid, "values")]
+        # 优先"完整版 vs 断更版"这一对：既展示缺章判定，也能看出证据段是部分匹配
+        if any("⊂" in v for v in vals) and "斗破苍穹.txt" in vals:
             pick = iid
             break
+    else:
+        for iid in pairs:
+            if any("⊂" in str(v) for v in app.ptree.item(iid, "values")):
+                pick = iid
+                break
     if pick:
+        print("  选中书对：", " | ".join(str(v) for v in app.ptree.item(pick, "values")))
         app.ptree.selection_set(pick)
         app.on_pick_pair()
         app.update()
@@ -194,6 +208,9 @@ def main(argv: list[str]) -> int:
           f" 栏宽={[p.winfo_width() for p in panes]}")
     capture(app, Path(args.out))
     app.destroy()
+    if not args.keep:
+        shutil.rmtree(root, ignore_errors=True)
+        print(f"  已清理演示书库 {root}")
     return 0
 
 
