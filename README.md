@@ -1,10 +1,20 @@
 # 小说查重（NovelDedup）
 
+> **项目状态**：v1.0.5，功能完整、持续维护。已在 1.7 万本的真实书库（NAS 上）实际跑过整条链路：
+> 首次全量扫描约 40 分钟、书库无变化时重扫 0.1 秒，分组 → 证据对照 → 移入回收站全部跑通。
+> 算法与判据的取舍都有实测或文献依据，见 [CHANGELOG.md](CHANGELOG.md) 与 [致谢](#十一致谢)。
+
 本地离线、按**内容**判重的中文小说库清理工具。  
 不依赖文件名、不依赖书名作者，纯本地运行，不联网、不上传任何文字。
 
 > 给上万本小说找出"同一部作品的不同副本"，告诉你它们差在哪，  
 > 并指出"从第 3 章第 2 段起，连续 4,820 字完全相同"。
+
+> **隐私硬规则**：全部运算在本地完成。主程序不导入 `requests` / `urllib.request` / `socket` / `http.client`，
+> 不上传任何文字、不调用任何云端模型、不联网。删除只走系统回收站，不做不可逆删除。
+
+同系列工具：[漫画查重 ComicDedup](https://github.com/tmadmao/comicdedup) ｜
+[视频查重 VideoDedup](https://github.com/tmadmao/videodedup)
 
 ---
 
@@ -333,3 +343,82 @@ python novel_dedup.py --import 结果.json --csv 重新分组.csv
 其他开发工具：`make_testdata.py`（造语料）、`bench_norm.py`（吞吐）、
 `probe_formats.py`（格式提取质量）、`probe_encoding.py`（编码探测成功率）、
 `probe_df.py`（套话截断阈值）、`probe_thresholds.py`（判据阈值观测）。
+
+---
+
+## 十一、致谢
+
+本项目的算法与工程取舍不是拍脑袋定的：遇到的每一类问题，在文献和开源实现里都有名字、有人踩过。
+在此对开发过程中读到的论文与项目一并致谢。具体改动 → [CHANGELOG.md](CHANGELOG.md)
+
+**学术论文**
+
+- **Winnowing: Local Algorithms for Document Fingerprinting** ——
+  Saul Schleimer, Daniel S. Wilkerson, Alex Aiken，SIGMOD 2003（MOSS 的算法）。
+  <http://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf>
+  本项目最核心的一篇。它解决了"按标点或固定边界切块取 hash"的死穴：一旦插入一条广告，
+  后面所有块的边界整体后移，命中率归零。winnowing 的指纹**只由内容决定**，
+  并且给出可证明的保证——任意长度 ≥ `w + k − 1` 的公共子串必定产生至少一个共同指纹。
+  README §三 那句"连续 161 字相同必检出"就是这个定理，不是经验值。
+  论文还给了密度 `2/(w+1)`，我们用 `--verify` 实测 1.323% vs 理论 1.325% 对上。
+- **On the Resemblance and Containment of Documents** —— Andrei Z. Broder，SEQS 1997。
+  <https://www.cs.princeton.edu/courses/archive/spr05/cos598E/bib/broder97resemblance.pdf>
+  resemblance（Jaccard）与 containment 的区分，直接对应本项目两类关系标签：
+  "同一版本的不同副本" vs "单卷 / 合订本"。论文还指出 **containment 不能用固定大小 sketch 估计**
+  （sketch 必须正比于文档大小），所以我们的包含度走"指纹倒排精确计数"，而不是 MinHash 采样。
+- **Identifying and Filtering Near-Duplicate Documents** —— Broder，WWW 2000。
+  <https://www.cs.princeton.edu/courses/archive/spr05/cos598E/bib/CPM%202000.pdf>
+  给出 sketch 的过滤性质，是"先用廉价特征筛掉绝大多数无关对、再精算"这条流水线的理论依据。
+- **On the burstiness of visual elements** —— Hervé Jégou, Matthijs Douze, Cordelia Schmid，CVPR 2009。
+  <http://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_CVPR_2009/data/papers/1530.pdf>
+  定义了"同一元素反复出现导致的相似度放大"，其 MMR（一对一匹配）就是本项目
+  `judge.matching()` 里"一个指纹只配一次"的出处。没有它，一段高频套话就能把链长刷上去，
+  "短篇 vs 长篇"会被误判成重复。
+- **Similarity Estimation Techniques from Rounding Algorithms** —— Moses Charikar，STOC 2002（SimHash）。
+  认真评估后**没有采用**：SimHash 只给一个整体相似度，给不出"从哪一章开始对得上"的位置信息，
+  而这恰好是本项目最想给用户的东西。记在这里是为了说明"为什么不用"。
+- **Detecting Near-Duplicates for Web Crawling** —— Gurmeet Singh Manku, Arvind Jain,
+  Anish Das Sarma，WWW 2007。LSH 分带参数选择的参考。我们的候选生成最后选了
+  "按 hash 高 8 位分 256 桶 + 桶内排序归并"（内存只与总字数相关），但"先分桶再配"的思路来自这里。
+- **Mash Screen: high-throughput sequence containment estimation** —— Ondov 等，Genome Biology 2019。
+  <https://link.springer.com/content/pdf/10.1186/s13059-019-1841-x.pdf>
+  基因组领域再次确认了 containment 的 sketch 大小必须随文档增长，佐证了上面对 Broder 的理解。
+- **Mossad: Defeating Software Plagiarism Detection** —— Devlin 等，2020。
+  <https://arxiv.org/abs/2010.01700>
+  对 MOSS 的 winnowing 实现做了逆向与参数分析，帮我们核对 `k`（噪声阈值）与 `w`（窗口）的实际语义，
+  避免把论文里两个参数的作用搞反。
+
+**开源项目**
+
+- 同系列项目 **[ComicDup / 漫画查重](https://github.com/tmadmao/comicdedup)** 与
+  **[视频查重](https://github.com/tmadmao/videodedup)**：本项目的骨架基本是从这两个项目搬来的——
+  并查集分组 + **组代表互验**（防连环并组）、LIS 最长递增链判据、"建议保留 + 判决理由"、
+  SQLite 缓存 + `FEAT_VER` 版本失效、移入系统回收站、PyInstaller 打包脚本，
+  以及"先用 `tools/probe_*.py` 做量化实验再改判据"的习惯。
+  踩过的坑也一并继承了：**所有阈值必须在自己的语料上重新标定，不照搬数值**。
+- **[dtubb/DejaText](https://github.com/dtubb/DejaText)**：段落级去重工具。借鉴它"按位置标记、
+  而不是按文本搜索"的产品思路——本项目的证据段存的是字符偏移与章节号，不是一段复制出来的文本。
+- **[ChenghaoMou/text-dedup](https://github.com/ChenghaoMou/text-dedup)**：MinHash/LSH/SimHash/
+  SuffixArray 全家桶。它的默认参数与"n-gram 取 3 是甜点"的工程结论，是我们标定 `k` 的起点；
+  但它面向 TB 级语料、**容忍误删**，而书库场景要求零误删，所以判据整套重做。
+- **[ekzhu/datasketch](https://github.com/ekzhu/datasketch)**：MinHash / LSH 的 MIT 参考实现。
+  用它对照过"MinHash 估计 vs 倒排精确计数"的取舍，最终因为要算 containment 而选择后者。
+- **Calibre 插件 Find Duplicates**（<https://github.com/kiwidude68/calibre_plugins/wiki/Find-Duplicates>）：
+  书库场景的交互参考——跨书库比对、"标记为例外"的做法，让我们确信"只给相似度、不给证据"是不够的。
+- **[famotime/ebook_toolbox](https://github.com/famotime/ebook_toolbox)**：`size → quick hash → full hash`
+  的分层判定思路，对应本项目 L0（文件 hash）→ L1（归一化全文 hash）→ 指纹精算这三层。
+- **[xkungfu/xiangshi](https://github.com/xkungfu/xiangshi)**：中文文本预处理的参考
+  （停用词/高频字处理）；它面向短文本问答，长篇要另做归一化。
+- **MOSS**：1994 年跑至今的编程作业查重服务，"先归一化再指纹"的工程范式来源。
+  本项目对应的是"先删广告行、折全角、去标点，再算指纹"。
+- **JPlag**：结果可视化（并排高亮匹配块）的交互参考，本项目的 A/B 原文对照面板受益于此。
+
+**依赖与许可证**
+
+- [pypdf](https://pypdf.readthedocs.io/)（BSD-3）—— 可选，PDF 文本层提取。
+- [opencc-python-reimplemented](https://github.com/yichen0831/opencc-python)（Apache-2.0）—— 可选，繁简转换。
+- [PyInstaller](https://pyinstaller.org/)（GPL with exception）—— 仅打包 exe 时使用。
+- 明确**不用**：EbookLib（AGPL-3.0）、mobi（GPL-3.0）、PyMuPDF（AGPL-3.0）。
+  EPUB/DOCX 用标准库 `zipfile` + `xml` 自解，PDF 改用 BSD-3 的 pypdf，避免 copyleft 传染。
+
+如果上面某条引用有误或漏了应感谢的人，欢迎提 issue 更正。
