@@ -375,6 +375,14 @@ python novel_dedup.py --import 结果.json --csv 重新分组.csv
 
 ---
 
+## 捐助 ☕
+
+如果这个项目帮到了你，欢迎请我喝杯咖啡。支持支付宝、微信、Ko-fi。
+
+[![请我喝咖啡 / Buy Me a Coffee](https://raw.githubusercontent.com/tmadmao/nascomicreader/main/sponsor.png)](http://iptv.new.tg/sponsor.html)
+
+[请我喝咖啡 · Buy Me a Coffee](http://iptv.new.tg/sponsor.html) — 随心就好，赞助不换取任何功能优先权，也不改变 issue 的处理顺序。
+
 ## 十一、致谢
 
 本项目的算法与工程取舍不是拍脑袋定的：遇到的每一类问题，在文献和开源实现里都有名字、有人踩过。
